@@ -6,7 +6,8 @@ import matplotlib.pyplot as mpl
 
 
 def getlabel(node):
-  
+  print "getlabel: {0}".format(dict(node))
+
   l = ""
   
   try:
@@ -20,7 +21,7 @@ def getlabel(node):
     k = None
 
   try:
-    v = node['value'] 
+    v = str(node['value'])
   except:
     v = None
   
@@ -52,65 +53,98 @@ def dump(graph, node):
     dump(graph, e[1])
 
 
-# probably broken now
-def _dump(g):
+#
+# Assume that toplevel object is always a dict
+# Returns the graph
+#
+def toplevel_traverse(data):
 
-  if type(g) == nx.classes.digraph.DiGraph:
-    for n in g.nodes():
-      print "node: {0}".format(g.node[n])
+  print "toplevel_traverse({0} [{1}])".format(data, type(data))
 
-      ## for e in graph.out_edges():
-        ##print "edge: {0}".format(e)
+  # failure conditions
+  if data is None:
+    raise "toplevel object is None"
+  ### if type(data) is not dict: 
+  ###  raise "toplevel object isn't a dict"
 
-        # print("  successors({1}): {0}".format(node.successors(n), n))
-        ##print("dump edge: {0}->{1}".format(getlabel(e[0]), getlabel(e[1])))
-        # dump(e[1])
-  else:
-    print(getlabel(g))
-    # print("unknown: {0}".format(type(node)))
-    
+  # seed the graph
+  graph = nx.DiGraph()
+  graph.add_node(0)
+
+  # assume toplevel is an anonymous dict
+  ## for k in data:
+  ##  traverse(graph, data[k], k)
+  traverse(graph, data)
+
+  return graph
 
 
 #
-# return a directed graph containing a root node 
+# data is a list, dict, or stringlike object
 #
-def splain(graph, data):
+def traverse(graph, data, name=''):
 
-  print "Splain({1}): {0}".format(type(data), graph)
+  print "traverse({0}, {1}, {2} [{3}])".format(graph, data, type(data), name)
 
-  label = str(uuid.uuid1())
-  g = nx.DiGraph()
+  node_id = str(uuid.uuid1())
 
   if type(data) is dict:
-    graph.add_node(label, element_type='DICT')
+    graph.add_node(node_id, {'type':'DICT', 'value':name})
 
     for key in data:
-      keylabel = "{0}_DICT_{1}".format(label, key)
-      graph.add_edge(label, keylabel)
+      print "traverse key {0}".format(key)
 
-      splain(g, data[key])
-      graph.add_nodes_from(g)
-      for n in g:
-        graph.add_edge(keylabel, n)
+      key_id = "{0}_DICT_{1}".format(node_id, key)
+      graph.add_node(key_id, {'type':'KEY', 'key':key})
+      graph.add_edge(node_id, key_id)
+      print "added key node {0}".format(graph.node[key_id])
+
+      g = nx.DiGraph()
+      print "about to traverse {0} [{1}]".format(data[key], type(data[key]))
+      _root = traverse(g, data[key])
+      graph.add_nodes_from(g.nodes(data=True))
+      graph.add_edges_from(g.edges(data=True))
+
+      # build edges to each new node
+      ### for node in g:
+      ###   print "adding edge {0} -> {1}".format(graph.node[key_id], graph.node[node])
+      ###   graph.add_edge(key_id, node)
+      graph.add_edge(key_id, _root)
+
+      print "returning from dict: {0}".format(g)
 
   elif type(data) is list:
-    graph.add_node(label, element_type='LIST')
+    graph.add_node(node_id, {'type':'LIST', 'value':name, 'top':'yes'})
 
     n = 0
     for element in data:
-      listlabel = "{0}_LIST_{1}".format(label, n)
+      list_id = "{0}_LIST_{1}".format(node_id, n)
+      graph.add_node(list_id, {'type':'ELEMENT', 'value':n})
       n = n + 1
-      graph.add_edge(label, listlabel)
+      graph.add_edge(node_id, list_id)
 
-      splain(g, element)
-      graph.add_nodes_from(g)
-      for n in g:
-        graph.add_edge(listlabel, n)
+      g = nx.DiGraph()
+      _root = traverse(g, element)
+      # print "before: {0}".format(graph.nodes())
+      graph.add_nodes_from(g.nodes(data=True))
+      graph.add_edges_from(g.edges(data=True))
+      # print "after: {0}".format(graph.nodes())
+
+      ### for node in g:
+        ### print "for node: {0} {1}".format(node, graph.node[node])
+        ### print "adding edge {0} -> {1}".format(list_id, node)    # graph.node[node])
+        ### graph.add_edge(list_id, node)
+      graph.add_edge(list_id, _root)
+      print "returning from list: {0}".format(g.nodes())
 
   else:
-    graph.add_node(label, element_type='VALUE')
-    graph.add_node(label, element_value=data )
-    print "DEBUG: {0}".format(graph.node[label])
+    # assume string-like...
+    graph.add_node(node_id, {'type':'VALUE', 'value':data})
+    print "added value node {0}".format(graph.node[node_id])
+
+  print "added node {0}".format(graph.node[node_id])
+  return node_id
+
 
 def fake():
   g = nx.DiGraph()
@@ -124,9 +158,9 @@ def fake():
   g.add_edge(1, 11)
 
   g.add_node(2, {'type':'DICT', 'value':'top-dict'})
-  g.add_node(20, {'type':'MAPPING', 'key':'Dog'})
-  g.add_node(21, {'type':'MAPPING', 'key':'Cat'})
-  g.add_node(22, {'type':'MAPPING', 'key':'Lizard'})
+  g.add_node(20, {'type':'ELEMENT', 'key':'Dog'})
+  g.add_node(21, {'type':'ELEMENT', 'key':'Cat'})
+  g.add_node(22, {'type':'ELEMENT', 'key':'Lizard'})
 
   g.add_node(200, {'type':'VALUE', 'value':'Sparky'})
   g.add_node(201, {'type':'VALUE', 'value':'Whiskers'})
@@ -152,14 +186,25 @@ def fake():
 #
 # main begins
 #
-G = fake()
+data = None
+with open('catalog.json') as f:
+  data = json.load(f)
+  print data
+G = toplevel_traverse(data)
+### G = fake()
 
 dump_graph(G)
 
 l = {}
-for n in G.nodes():
-  print "making label", getlabel(G.node[n])
-  G.node[n]['label'] = getlabel(G.node[n])
+for t in G.nodes(data=True):
+  _node = t[0]
+  _data = t[1]
+  G.node[_node]['label'] = getlabel(_data)
+
+# for n in G.nodes():
+  ## print "making label", getlabel(G.node[n])
+#  G.node[n]['label'] = getlabel(G.node[n])
+
 print "made labels", l
 
 with open("out.dot", "w") as f:
@@ -173,7 +218,4 @@ mpl.show()
 """
 
 """
-with open('catalog.json') as f:
-  data = json.load(f)
-  print data
 """
