@@ -6,17 +6,35 @@ import matplotlib.pyplot as mpl
 
 
 def getlabel(node):
+  
   l = ""
+  
   try:
-    l = l + node['type'] + ' '
+    t = node['type'] 
   except:
-    l = l + "NOTYPE" + ' '
+    t = None
 
   try:
-    l = l + node['value'] 
+    k = node['key'] 
   except:
-    l = l + "no-value"
-    
+    k = None
+
+  try:
+    v = node['value'] 
+  except:
+    v = None
+  
+
+  if t:
+    l = l + "{0} ".format(t)
+
+  if k:
+    l = l + "[{0}]".format(k)
+
+  if v:
+    l = l + v
+
+  print "label", l
   return l
 
 
@@ -113,7 +131,7 @@ def fake():
   g.add_node(200, {'type':'VALUE', 'value':'Sparky'})
   g.add_node(201, {'type':'VALUE', 'value':'Whiskers'})
 
-  g.add_node(300, {'type':'LIST', 'value':'_anonymous_'})
+  g.add_node(300, {'type':'LIST', 'value':''})
   g.add_node(202, {'type':'VALUE', 'value':'Eliza'})
   g.add_node(203, {'type':'VALUE', 'value':'Waldo'})
   g.add_node(204, {'type':'VALUE', 'value':'Wanda'})
@@ -140,8 +158,9 @@ dump_graph(G)
 
 l = {}
 for n in G.nodes():
+  print "making label", getlabel(G.node[n])
   G.node[n]['label'] = getlabel(G.node[n])
-print l
+print "made labels", l
 
 with open("out.dot", "w") as f:
   f.write(str(nx.to_agraph(G)))
