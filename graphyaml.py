@@ -79,11 +79,8 @@ def toplevel_traverse(data):
   # seed the graph
   graph = nx.DiGraph()
   graph.add_node(0)
-
-  # assume toplevel is an anonymous dict
-  ## for k in data:
-  ##  traverse(graph, data[k], k)
-  traverse(graph, data)
+  _root = traverse(graph, data)
+  graph.add_edge(0, _root)
 
   return graph
 
