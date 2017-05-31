@@ -50,13 +50,14 @@ def getlabel(node):
 def dump_graph(g):
   dump(g, 0)
 
+
 #
 # n is a node...
 #
 def dump(graph, node):
-  trace( 'DUMP: ', node, graph.node[node])
+  print( 'DUMP: ', node, graph.node[node])
   for e in graph.out_edges(node, data=True):
-    trace( '  EDGE: ', e)
+    print( '  EDGE: ', e)
   for e in graph.out_edges(node, data=True):
     dump(graph, e[1])
 
@@ -228,7 +229,8 @@ with open('catalog.json') as f:
 G = toplevel_traverse(data)
 ### G = fake()
 
-dump_graph(G)
+if graph_debug:
+    dump_graph(G)
 
 l = {}
 for t in G.nodes(data=True):
