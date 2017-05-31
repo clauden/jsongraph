@@ -153,8 +153,7 @@ arg_p.add_argument('input_file', nargs='?', type=argparse.FileType('r'),
                    default=sys.stdin)
 arg_p.add_argument('-o', '--output-file', action='store', type=argparse.FileType('w'),
                    default=sys.stdout, required=False)
-arg_p.add_argument('-t', '--trace-level', type=int, choices=xrange(0,5), 
-                   const=1, action='store', nargs='?', required=False)
+arg_p.add_argument('-t', '--trace', action='count', required=False)
 arg_p.add_argument('-g', '--graph-debug', action='store_true', required=False)
 try:
   arg_ns = arg_p.parse_args()
@@ -165,13 +164,13 @@ except IOError as ioe:
 print("===args")
 print(arg_ns.input_file)
 print(arg_ns.output_file)
-print(arg_ns.trace_level)
+print(arg_ns.trace)
 print(arg_ns.graph_debug)
 print("===end args")
 
 input_file = arg_ns.input_file
 output_file = arg_ns.output_file
-trace_level = arg_ns.trace_level
+trace_level = arg_ns.trace
 graph_debug = arg_ns.graph_debug
 
 data = None
