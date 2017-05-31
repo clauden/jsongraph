@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import yaml
 import uuid
 import sys 
@@ -6,8 +8,8 @@ import matplotlib.pyplot as mpl
 
 
 def trace(*s):
-  if tracelevel > 0:
-    print "".join(map(str, s))
+  if trace_level > 0:
+    print("".join(map(str, s)))
 
 
 def getlabel(node):
