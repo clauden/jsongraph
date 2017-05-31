@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import yaml
 import uuid
+import argparse
 import sys 
 import networkx as nx
 import matplotlib.pyplot as mpl
@@ -193,8 +194,32 @@ def fake():
 #
 # main begins
 #
-tracelevel = 0
-write_file = None
+arg_ns = None
+arg_p = argparse.ArgumentParser(description='yaml to dot')
+arg_p.add_argument('input_file', nargs='?', type=argparse.FileType('r'), 
+                   default=sys.stdin)
+arg_p.add_argument('-o', '--output-file', action='store', type=argparse.FileType('w'),
+                   default=sys.stdout, required=False)
+arg_p.add_argument('-t', '--trace-level', type=int, choices=xrange(0,5), 
+                   const=1, action='store', nargs='?', required=False)
+arg_p.add_argument('-g', '--graph-debug', action='store_true', required=False)
+try:
+  arg_ns = arg_p.parse_args()
+except IOError as ioe:
+  print(ioe, file=sys.stderr)
+  sys.exit(1)
+  
+print("===args")
+print(arg_ns.input_file)
+print(arg_ns.output_file)
+print(arg_ns.trace_level)
+print(arg_ns.graph_debug)
+print("===end args")
+
+input_file = arg_ns.input_file
+output_file = arg_ns.output_file
+trace_level = arg_ns.trace_level
+graph_debug = arg_ns.graph_debug
 
 data = None
 with open('catalog.json') as f:
@@ -215,15 +240,29 @@ for t in G.nodes(data=True):
   ## trace( "making label", getlabel(G.node[n]))
 #  G.node[n]['label'] = getlabel(G.node[n])
 
-trace( "made labels", l)
+# assume output_file is already open...
+output_file.write(dot)
 
-if write_file:
-  with open("out.dot", "w") as f:
-    f.write(str(nx.to_agraph(G)))
+# with open(output_file, "w") as f:
+#     f.write(dot)
 
-print nx.to_agraph(G)
+
+# if write_file:
+#   with open("out.dot", "w") as f:
+#     f.write(dot)
+# else:
+#   print(dot)
 
 """
+l = {}
+for t in G.nodes(data=True):
+  _node = t[0]
+  _data = t[1]
+  G.node[_node]['label'] = getlabel(_data)
+
+trace( "made labels", l)
+
+
 pos = nx.spring_layout(G)
 nx.draw(G, pos)
 nx.draw_networkx_labels(G, pos, labels = l)
