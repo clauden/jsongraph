@@ -86,7 +86,7 @@ def toplevel_traverse(data):
 
 
 #
-# data is a list, dict, or stringlike object
+# data is a list, dict, or stringlike 
 #
 def traverse(graph, data, name=''):
 
@@ -111,10 +111,7 @@ def traverse(graph, data, name=''):
       graph.add_nodes_from(g.nodes(data=True))
       graph.add_edges_from(g.edges(data=True))
 
-      # build edges to each new node
-      ### for node in g:
-      ###   trace( "adding edge {0} -> {1}".format(graph.node[key_id], graph.node[node]))
-      ###   graph.add_edge(key_id, node)
+      # build edge from current root to the new root
       graph.add_edge(key_id, _root)
 
       trace( "returning from dict: {0}".format(g))
@@ -131,16 +128,11 @@ def traverse(graph, data, name=''):
 
       g = nx.DiGraph()
       _root = traverse(g, element)
-      # trace( "before: {0}".format(graph.nodes()))
       graph.add_nodes_from(g.nodes(data=True))
       graph.add_edges_from(g.edges(data=True))
-      # trace( "after: {0}".format(graph.nodes()))
 
-      ### for node in g:
-        ### trace( "for node: {0} {1}".format(node, graph.node[node]))
-        ### trace( "adding edge {0} -> {1}".format(list_id, node)    # graph.node[node]))
-        ### graph.add_edge(list_id, node)
       graph.add_edge(list_id, _root)
+
       trace( "returning from list: {0}".format(g.nodes()))
 
   else:
@@ -151,43 +143,6 @@ def traverse(graph, data, name=''):
   trace( "added node {0}".format(graph.node[node_id]))
   return node_id
 
-
-def fake():
-  g = nx.DiGraph()
-  g.add_node(0)
-
-  g.add_node(1, {'type':'LIST', 'value':'top-list'})
-  g.add_node(10, {'type':'ELEMENT', 'value':'FroBozz'})
-  g.add_node(11, {'type':'ELEMENT', 'value':'Foobar'})
-  g.add_edge(0, 1)
-  g.add_edge(1, 10)
-  g.add_edge(1, 11)
-
-  g.add_node(2, {'type':'DICT', 'value':'top-dict'})
-  g.add_node(20, {'type':'ELEMENT', 'key':'Dog'})
-  g.add_node(21, {'type':'ELEMENT', 'key':'Cat'})
-  g.add_node(22, {'type':'ELEMENT', 'key':'Lizard'})
-
-  g.add_node(200, {'type':'VALUE', 'value':'Sparky'})
-  g.add_node(201, {'type':'VALUE', 'value':'Whiskers'})
-
-  g.add_node(300, {'type':'LIST', 'value':''})
-  g.add_node(202, {'type':'VALUE', 'value':'Eliza'})
-  g.add_node(203, {'type':'VALUE', 'value':'Waldo'})
-  g.add_node(204, {'type':'VALUE', 'value':'Wanda'})
-
-  g.add_edge(0, 2)
-  g.add_edge(2, 20)
-  g.add_edge(2, 21)
-  g.add_edge(2, 22)
-  g.add_edge(20, 200)
-  g.add_edge(21, 201)
-  g.add_edge(22, 300)
-  g.add_edge(300, 202)
-  g.add_edge(300, 203)
-  g.add_edge(300, 204)
-
-  return g
 
 #
 # main begins
@@ -220,11 +175,16 @@ trace_level = arg_ns.trace_level
 graph_debug = arg_ns.graph_debug
 
 data = None
-with open('catalog.json') as f:
-  data = yaml.load(f)
-  trace( data)
+
+# assume input_file is already open...
+data = yaml.load(input_file)
+
+# with open(input_file, "r") as f:
+#   data = yaml.load(f)
+#   trace( data)
+
+trace(data)
 G = toplevel_traverse(data)
-### G = fake()
 
 if graph_debug:
     dump_graph(G)
@@ -234,10 +194,9 @@ for t in G.nodes(data=True):
   _node = t[0]
   _data = t[1]
   G.node[_node]['label'] = getlabel(_data)
+trace( "made labels", l)
 
-# for n in G.nodes():
-  ## trace( "making label", getlabel(G.node[n]))
-#  G.node[n]['label'] = getlabel(G.node[n])
+dot = str(nx.to_agraph(G))
 
 # assume output_file is already open...
 output_file.write(dot)
@@ -266,7 +225,4 @@ pos = nx.spring_layout(G)
 nx.draw(G, pos)
 nx.draw_networkx_labels(G, pos, labels = l)
 mpl.show()
-"""
-
-"""
 """
